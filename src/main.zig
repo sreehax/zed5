@@ -25,7 +25,7 @@ pub fn main() anyerror!void {
         return;
     }
     try stderr.print(
-        \\zemu by Sreehari Sreedev
+        \\zed5 by Sreehari Sreedev
         \\Usage:
         \\
         , .{}

@@ -21,14 +21,14 @@ pub fn main() anyerror!void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
-    if(args.option("--elf")) |elf| {
-        const buf = try util.readFileFull(elf, &gpa.allocator);
+    if(args.option("--bin")) |bin| {
+        const buf = try util.readFileFull(bin, &gpa.allocator);
         defer gpa.allocator.free(buf);
 
         try stderr.print("Read {} bytes\n", .{ buf.len });
         return;
-    } else if(args.option("--bin")) |bin| {
-        const buf = try util.readFileFull(bin, &gpa.allocator);
+    } else if(args.option("--elf")) |elf| {
+        const buf = try util.readFileFull(elf, &gpa.allocator);
         defer gpa.allocator.free(buf);
 
         const cpu = try Cpu.fromElfBlob(buf, &gpa.allocator);

@@ -21,20 +21,24 @@ pub fn main() anyerror!void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
-    if(args.option("--bin")) |bin| {
+    if (args.option("--bin")) |bin| {
         const buf = try util.readFileFull(bin, &gpa.allocator);
         defer gpa.allocator.free(buf);
 
-        try stderr.print("Read {} bytes\n", .{ buf.len });
+        var cpu = try Cpu.fromFlatBlob(buf, &gpa.allocator);
+        defer cpu.mem.deinit();
+
+        try cpu.mainloop();
         return;
-    } else if(args.option("--elf")) |elf| {
+    } else if (args.option("--elf")) |elf| {
         const buf = try util.readFileFull(elf, &gpa.allocator);
         defer gpa.allocator.free(buf);
 
-        const cpu = try Cpu.fromElfBlob(buf, &gpa.allocator);
+        var cpu = try Cpu.fromElfBlob(buf, &gpa.allocator);
         defer cpu.mem.deinit();
 
-        try stderr.print("Read {} bytes\n", .{ buf.len });
+        // kick off the instruction cycle
+        try cpu.mainloop();
         return;
     }
     try stderr.print(

@@ -1,6 +1,8 @@
 const std = @import("std");
 const clap = @import("clap");
 const stderr = std.io.getStdErr().writer();
+const util = @import("util.zig");
+const Cpu = @import("Cpu.zig");
 
 pub fn main() anyerror!void {
     const params = comptime [_]clap.Param(clap.Help){
@@ -16,12 +18,23 @@ pub fn main() anyerror!void {
     };
     defer args.deinit();
 
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
     if(args.option("--elf")) |elf| {
-        std.debug.warn("elf: {s}\n", .{elf});
+        const buf = try util.readFileFull(elf, &gpa.allocator);
+        defer gpa.allocator.free(buf);
+
+        try stderr.print("Read {} bytes\n", .{ buf.len });
         return;
     } else if(args.option("--bin")) |bin| {
-        std.debug.warn("flat binary: {s}\n", .{bin});
+        const buf = try util.readFileFull(bin, &gpa.allocator);
+        defer gpa.allocator.free(buf);
 
+        const cpu = try Cpu.fromElfBlob(buf, &gpa.allocator);
+        defer cpu.mem.deinit();
+
+        try stderr.print("Read {} bytes\n", .{ buf.len });
         return;
     }
     try stderr.print(
